@@ -1,0 +1,27 @@
+select seat.Flight_number, seat.Leg_number, seat.Date, seat.Seat_no, ticket.ticket_code, customer.name as Customer_name
+from   (seat
+		left join ticket
+		on (ticket.flight_number = seat.flight_number and ticket.leg_number = seat.leg_number and ticket.date = seat.date and ticket.seat_no = seat.seat_no)
+        )
+		left join customer on customer.pass_number = ticket.customer_pass_num
+order by flight_number asc;
+
+
+select customer.name as Customer_name, count(ticket_code) as Number_of_tickets
+from ticket
+right join customer
+on customer.pass_number = ticket.customer_pass_num
+group by name
+order by Number_of_tickets desc;
+
+
+select airline.hq_location as City, airline_name, airplane_company_name
+from airline
+left join airplane_company
+on airline.Hq_location = airplane_company.Hq_location
+union
+select airplane_company.hq_location as City, airline_name, airplane_company_name
+from airline
+right join airplane_company
+on airline.Hq_location = airplane_company.Hq_location
+order by City;

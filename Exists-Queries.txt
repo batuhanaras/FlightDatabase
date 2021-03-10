@@ -1,0 +1,16 @@
+select airport.airport_name
+from airport
+where not exists (select airplane_type_name
+				  from airplane_type
+                  where airplane_type.airplane_company = 1 
+                  and airplane_type_name not in
+					  (select airplane_type_name
+					  from can_land
+					  where airport.airport_code = can_land.airport_code));
+                      
+                      
+select *
+from customer
+where not exists (select *
+				  from ticket
+				  where ticket.customer_pass_num = customer.pass_number);

@@ -1,0 +1,475 @@
+SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
+SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
+SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';
+
+-- -----------------------------------------------------
+-- Schema mydb
+-- -----------------------------------------------------
+-- -----------------------------------------------------
+-- Schema mydb
+-- -----------------------------------------------------
+CREATE SCHEMA IF NOT EXISTS `mydb` DEFAULT CHARACTER SET utf8 ;
+USE `mydb` ;
+-- -----------------------------------------------------
+-- Table `mydb`.`AIRLINE`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`AIRLINE` (
+  `Airline_id` INT NOT NULL,
+  `Airline_name` VARCHAR(100) NOT NULL,
+  `Hq_location` VARCHAR(100) NULL,
+  `Fleet_size` INT NOT NULL,
+  `Destinations` INT NOT NULL,
+  PRIMARY KEY (`Airline_id`))
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`AIRPLANE_COMPANY`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`AIRPLANE_COMPANY` (
+  `Airplane_company_id` INT NOT NULL,
+  `Airplane_company_name` VARCHAR(100) NOT NULL,
+  `Hq_location` VARCHAR(100) NULL,
+  PRIMARY KEY (`Airplane_company_id`))
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`AIRPORT`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`AIRPORT` (
+  `Airport_code` INT NOT NULL,
+  `Airport_name` VARCHAR(100) NOT NULL,
+  `City` VARCHAR(100) NOT NULL,
+  `State` VARCHAR(100) NOT NULL,
+  PRIMARY KEY (`Airport_code`))
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`AIRPLANE_TYPE`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`AIRPLANE_TYPE` (
+  `Airplane_type_name` VARCHAR(100) NOT NULL,
+  `Max_seats` INT NOT NULL,
+  `Airplane_company` INT NOT NULL,
+  PRIMARY KEY (`Airplane_type_name`),
+  INDEX `Airplane_company_idx` (`Airplane_company` ASC) VISIBLE,
+  CONSTRAINT `Airplane_company`
+    FOREIGN KEY (`Airplane_company`)
+    REFERENCES `mydb`.`AIRPLANE_COMPANY` (`Airplane_company_id`)
+    ON DELETE RESTRICT
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`CAN_LAND`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`CAN_LAND` (
+  `Airport_code` INT NOT NULL,
+  `Airplane_type_name` VARCHAR(100) NOT NULL,
+  PRIMARY KEY (`Airport_code`, `Airplane_type_name`),
+  CONSTRAINT `Can_land_airport`
+	  FOREIGN KEY (`Airport_code`)
+	  REFERENCES `mydb`.`AIRPORT` (`Airport_code`)
+      ON DELETE CASCADE
+      ON UPDATE CASCADE,
+  CONSTRAINT `Can_land_airplane_type`
+	  FOREIGN KEY (`Airplane_type_name`)
+	  REFERENCES `mydb`.`AIRPLANE_TYPE` (`Airplane_type_name`)
+      ON DELETE CASCADE
+      ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `mydb`.`AIRPLANE`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`AIRPLANE` (
+  `Airplane_id` INT NOT NULL,
+  Total_no_of_seats INT NOT NULL,
+  `Airplane_type` VARCHAR(100) NOT NULL,
+  PRIMARY KEY (`Airplane_id`),
+  INDEX `Airplane_type_idx` (`Airplane_type` ASC) VISIBLE,
+  CONSTRAINT `Airplane_type`
+    FOREIGN KEY (`Airplane_type`)
+    REFERENCES `mydb`.`AIRPLANE_TYPE` (`Airplane_type_name`)
+    ON DELETE RESTRICT
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`CUSTOMER`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`CUSTOMER` (
+  `Pass_number` INT NOT NULL,
+  `Name` VARCHAR(45) NOT NULL,
+  `Age` INT NOT NULL,
+  `Email` VARCHAR(50) NULL,
+  `Address` VARCHAR(800) NULL,
+  `Country` VARCHAR(50) NULL,
+  `Segmentation` VARCHAR(50), 
+  `Baggage_allowance` INT,
+  PRIMARY KEY (`Pass_number`),
+  CONSTRAINT `Age_check`
+	CHECK (`Age` > 0 AND `Age` < 110))
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`FLIGHT`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`FLIGHT` (
+  `Flight_number` INT NOT NULL,
+  `Weekdays` INT NULL,
+  `Airline` INT NOT NULL,
+  PRIMARY KEY (`Flight_number`),
+  INDEX `Airline_idx` (`Airline` ASC) VISIBLE,
+  CONSTRAINT `Airline`
+    FOREIGN KEY (`Airline`)
+    REFERENCES `mydb`.`AIRLINE` (`Airline_id`)
+    ON DELETE RESTRICT
+    ON UPDATE CASCADE,
+  CONSTRAINT `Weekdays_check`
+	CHECK (`Weekdays` > 0 AND `Weekdays` < 8))
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`FARE`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`FARE` (
+  `Flight_number` INT NOT NULL,
+  `Fare_code` INT NOT NULL,
+  `Amount` INT NOT NULL,
+  `Restrictions` VARCHAR(45) NULL,
+  PRIMARY KEY (`Flight_number`, `Fare_code`),
+  CONSTRAINT `Flight_number`
+    FOREIGN KEY (`Flight_number`)
+    REFERENCES `mydb`.`FLIGHT` (`Flight_number`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `Price_check`
+	CHECK (`Amount` > 0 AND `Amount` < 5000))
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`FLIGHT_LEG`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`FLIGHT_LEG` (
+  `Flight_number` INT NOT NULL,
+  `Leg_number` INT NOT NULL,
+  `Miles` INT NOT NULL,
+  `Departure_airport_code` INT NOT NULL,
+  `Scheduled_departure_time` TIME NOT NULL,
+  `Arrival_airport_code` INT NOT NULL,
+  `Scheduled_arrival_time` TIME NOT NULL,
+  PRIMARY KEY (`Flight_number`, `Leg_number`),
+  INDEX `Arrival_airport_code_idx` (`Arrival_airport_code` ASC) VISIBLE,
+  INDEX `Departure_airport_code_idx` (`Departure_airport_code` ASC) VISIBLE,
+  CONSTRAINT `Flight_num`
+    FOREIGN KEY (`Flight_number`)
+    REFERENCES `mydb`.`FLIGHT` (`Flight_number`)
+    ON DELETE RESTRICT
+    ON UPDATE CASCADE,
+  CONSTRAINT `Departure_airport_code`
+    FOREIGN KEY (`Departure_airport_code`)
+    REFERENCES `mydb`.`AIRPORT` (`Airport_code`),
+  CONSTRAINT `Arrival_airport_code`
+    FOREIGN KEY (`Arrival_airport_code`)
+    REFERENCES `mydb`.`AIRPORT` (`Airport_code`),
+  CONSTRAINT `Miles_check`
+	CHECK (`Miles` > 0 AND `Miles` < 10000),
+  CONSTRAINT `Same_airport_check`
+	CHECK (`Departure_airport_code` <> `Arrival_airport_code`))
+ENGINE = InnoDB;
+
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`LEG_INSTANCE`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`LEG_INSTANCE` (
+  `Flight_number` INT NOT NULL,
+  `Leg_number` INT NOT NULL,
+  `Date` DATE NOT NULL,
+  `Departure_time` TIME,
+  `Departure_airport_code` INT,
+  `Arrival_time` TIME,
+  `Arrival_airport_code` INT,
+  `No_of_available_seats` INT NOT NULL,
+  `Airplane_id` INT NOT NULL,
+  PRIMARY KEY (`Flight_number`, `Leg_number`, `Date`),
+  INDEX `Flight_leg_idx` (`Flight_number` ASC, `Leg_number` ASC) VISIBLE,
+  INDEX `Airplane_id_idx` (`Airplane_id` ASC) VISIBLE,
+  CONSTRAINT `Flight_leg`
+    FOREIGN KEY (`Flight_number` , `Leg_number`)
+    REFERENCES `mydb`.`FLIGHT_LEG` (`Flight_number` , `Leg_number`)
+    ON DELETE RESTRICT
+    ON UPDATE CASCADE,
+  CONSTRAINT `Arr_airport`
+    FOREIGN KEY (`Arrival_airport_code`)
+    REFERENCES `mydb`.`AIRPORT` (`Airport_code`)
+    ON DELETE RESTRICT
+    ON UPDATE CASCADE,
+  CONSTRAINT `Dep_airport`
+    FOREIGN KEY (`Departure_airport_code`)
+    REFERENCES `mydb`.`AIRPORT` (`Airport_code`)
+    ON DELETE RESTRICT
+    ON UPDATE CASCADE,
+  CONSTRAINT `Airplane_id`
+    FOREIGN KEY (`Airplane_id`)
+    REFERENCES `mydb`.`AIRPLANE` (`Airplane_id`)
+    ON DELETE RESTRICT
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table `mydb`.`SEAT`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`SEAT` (
+  `Flight_number` INT NOT NULL,
+  `Leg_number` INT NOT NULL,
+  `Date` DATE NOT NULL,
+  `Seat_no` INT NOT NULL,
+  PRIMARY KEY (`Flight_number`, `Leg_number`, `Date`, `Seat_no`),
+  CONSTRAINT `Leg_instance`
+    FOREIGN KEY (`Flight_number` , `Leg_number` , `Date`)
+    REFERENCES `mydb`.`LEG_INSTANCE` (`Flight_number` , `Leg_number` , `Date`)
+    ON DELETE RESTRICT
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`TICKET`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`TICKET` (
+  `Ticket_code` INT NOT NULL,
+  `Gate_no` INT NOT NULL,
+  `Customer_pass_num` INT NOT NULL,
+  `Flight_number` INT NOT NULL,
+  `Leg_number` INT NOT NULL,
+  `Date` DATE NOT NULL,
+  `Seat_no` INT NOT NULL,
+  PRIMARY KEY (`Ticket_code`),
+  INDEX `Pass_num_idx` (`Customer_pass_num` ASC) VISIBLE,
+  INDEX `Seat_idx` (`Flight_number` ASC, `Leg_number` ASC, `Date` ASC, `Seat_no` ASC) VISIBLE,
+  CONSTRAINT `Pass_num`
+    FOREIGN KEY (`Customer_pass_num`)
+    REFERENCES `mydb`.`CUSTOMER` (`Pass_number`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `Seat`
+    FOREIGN KEY (`Flight_number` , `Leg_number` , `Date` , `Seat_no`)
+    REFERENCES `mydb`.`SEAT` (`Flight_number` , `Leg_number` , `Date` , `Seat_no`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `mydb`.`FFC`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `mydb`.`FFC` (
+  `Record_no` INT NOT NULL AUTO_INCREMENT,
+  `Customer_pass_num` INT NOT NULL,
+  `Ticket_code` INT NOT NULL,
+  `Flight_number` INT NOT NULL,
+  `Leg_number` INT NOT NULL,
+  PRIMARY KEY (`Record_no`),
+  INDEX `Pass_num_idx` (`Customer_pass_num` ASC) VISIBLE,
+  INDEX `Ticket_code_idx` (`Ticket_code` ASC) VISIBLE,
+  INDEX `Flight_leg_idx` (`Flight_number` ASC, `Leg_number` ASC) VISIBLE,
+  UNIQUE INDEX `Ticket_code_UNIQUE` (`Ticket_code` ASC) VISIBLE,
+  CONSTRAINT `Pass_numberr`
+    FOREIGN KEY (`Customer_pass_num`)
+    REFERENCES `mydb`.`CUSTOMER` (`Pass_number`)
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT `Ticket_code`
+    FOREIGN KEY (`Ticket_code`)
+    REFERENCES `mydb`.`TICKET` (`Ticket_code`)
+    ON DELETE CASCADE
+    ON UPDATE RESTRICT,
+  CONSTRAINT `Flight_legg`
+    FOREIGN KEY (`Flight_number` , `Leg_number`)
+    REFERENCES `mydb`.`FLIGHT_LEG` (`Flight_number` , `Leg_number`)
+    ON DELETE RESTRICT
+    ON UPDATE RESTRICT)
+ENGINE = InnoDB;
+
+
+SET SQL_MODE=@OLD_SQL_MODE;
+SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
+SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
+
+
+
+create view ffc_mil as
+select customer.Name as Customer_name, ffc.Customer_pass_num as Passport_number, customer.Segmentation as Segment, customer.Baggage_allowance, sum(Flight_leg.Miles) as Total_miles
+from customer, ffc, flight_leg
+where customer.Pass_number = ffc.Customer_pass_num and ffc.Flight_number = flight_leg.Flight_number and ffc.Leg_number = flight_leg.Leg_number
+group by customer.Name, ffc.Customer_pass_num, customer.Segmentation
+order by sum(Flight_leg.Miles) desc;
+
+
+create view departureFlights as
+select airline.Airline_name as Airline, flight.Flight_number, leg_instance.Date, Arrival_airport.City as Arrival_city, leg_instance.Departure_time
+from airline, flight, leg_instance, airport as Arrival_airport
+where leg_instance.Flight_number = flight.Flight_number and flight.Airline = Airline.Airline_id and 
+	leg_instance.Arrival_airport_code = Arrival_airport.Airport_code and Leg_instance.Date = '2021-02-12'
+order by Departure_time asc;
+
+
+
+
+create view arrivalFlights as
+select airline.Airline_name as Airline, flight.Flight_number, leg_instance.Date, Departure_airport.City as Departure_city, leg_instance.Arrival_time
+from airline, flight, leg_instance, airport as Departure_airport
+where flight.Airline = airline.Airline_id and leg_instance.Flight_number = flight.Flight_number and
+	  leg_instance.date = '2021-02-12' and leg_instance.Departure_airport_code = Departure_airport.Airport_code
+order by Arrival_time;
+
+
+
+
+create view Destinations_Earnings as
+select airline.Airline_name, Flight.Flight_number,Dep.City as Departure_City, Arr.City as Arrival_City,
+ sum(Fare.Amount) as Total_amount
+from airline, flight, fare, flight_leg, ticket, airport as Dep, airport as Arr
+where airline.airline_id = flight.airline and fare.flight_number = flight.Flight_number and
+      ticket.flight_number = flight.flight_number and   Dep.Airport_code  = flight_leg.Departure_airport_code AND
+      Arr.Airport_code = flight_leg.Arrival_airport_code and flight.flight_number = flight_leg.flight_number
+group by flight_number
+order by Total_amount desc;
+
+
+
+
+create view boarding_pass as
+select  ticket.Ticket_code as Ticket_Code,
+		leg_instance.Flight_number as Flight_Number,
+		customer.Name as Customer_Name,
+		Dep.City as Departure_City,
+		Arr.City as Arrival_City,
+		leg_instance.Date as Flight_Date,
+		DepTime.Departure_time as Departure_Time,
+		ArrTime.Arrival_time as Arrival_Time,
+		ticket.Gate_no as Gate_No,
+		ticket.Seat_no as Seat_No
+
+FROM airport as Dep, airport as Arr,
+    leg_instance as DepTime, leg_instance as ArrTime,
+    ticket, customer, leg_instance, flight_leg
+
+WHERE customer.Pass_number = ticket.Customer_pass_num AND
+    ticket.Flight_number = leg_instance.Flight_number AND
+    ticket.Leg_number = leg_instance.Leg_number AND
+    ticket.Date = leg_instance.Date AND
+    leg_instance.flight_number = flight_leg.flight_number AND
+    leg_instance.Leg_number = flight_leg.Leg_number AND
+    DepTime.Departure_time = leg_instance.Departure_time AND
+    ArrTime.Arrival_time = leg_instance.Arrival_time AND
+    Dep.Airport_code = flight_leg.Departure_airport_code AND
+    Arr.Airport_code = flight_leg.Arrival_airport_code;
+    
+    
+    
+
+DELIMITER $$
+create trigger insertFFC
+after insert 
+on ticket for each row
+begin
+insert into ffc(Customer_pass_num, Ticket_code, Flight_number, Leg_number) values(new.Customer_pass_num, new.Ticket_code, new.Flight_number, new.Leg_number);
+end $$
+DELIMITER ;
+
+
+
+
+DELIMITER $$
+create trigger ticketCancellation
+before delete 
+on ticket for each row
+begin
+update Leg_instance
+set No_of_available_seats = No_of_available_seats + 1
+where old.Flight_number = Leg_instance.Flight_number and old.Leg_number = Leg_instance.Leg_number and old.Date = Leg_instance.Date;
+end $$
+DELIMITER ;
+
+
+
+
+DELIMITER $$
+create trigger seatReservation
+after insert 
+on ticket for each row
+begin
+update Leg_instance
+set No_of_available_seats = No_of_available_seats - 1
+where new.Flight_number = Leg_instance.Flight_number and new.Leg_number = Leg_instance.Leg_number and new.Date = Leg_instance.Date;
+end $$
+DELIMITER ;
+
+
+
+
+
+DELIMITER $$
+create trigger customerSegmentation
+after insert 
+on ffc for each row
+begin
+SELECT Total_miles INTO @mil_sayisi FROM ffc_mil WHERE ffc_mil.Passport_number = new.Customer_pass_num;
+if @mil_sayisi < 30000
+then
+	update Customer
+	set Segmentation = 'Classic',
+    Baggage_allowance = 15
+	where CUSTOMER.Pass_number = new.Customer_pass_num;
+end if;
+if @mil_sayisi >= 30000 and @mil_sayisi < 50000
+then
+	update Customer
+	set Segmentation = 'Classic Plus',
+    Baggage_allowance = 20
+	where CUSTOMER.Pass_number = new.Customer_pass_num;
+end if;
+if @mil_sayisi >= 50000 and @mil_sayisi < 70000
+then
+	update Customer
+	set Segmentation = 'Elite',
+    Baggage_allowance = 25
+	where CUSTOMER.Pass_number = new.Customer_pass_num;
+end if;
+if @mil_sayisi >= 70000
+then
+	update Customer
+	set Segmentation = 'Elite Plus',
+    Baggage_allowance = 30
+	where CUSTOMER.Pass_number = new.Customer_pass_num;
+end if;
+end $$
+DELIMITER ;
+
+
+
+
+DELIMITER $$
+create trigger updateAvailableSeat
+before insert 
+on leg_instance for each row
+begin
+DECLARE total_seats INT;
+SET total_seats =
+    (SELECT airplane.Total_no_of_seats 
+        FROM airplane
+        WHERE  airplane.Airplane_id = new.Airplane_id);
+set new.No_of_available_seats = total_seats;
+end $$
+DELIMITER ;

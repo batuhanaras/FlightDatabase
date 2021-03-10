@@ -1,0 +1,34 @@
+select airline_name, count(city) as Number_of_current_destinations
+from airline, airport
+where airport_code in (select airport_code
+					 from flight, flight_leg
+					 where airline.airline_id = flight.airline and 
+                     flight.flight_number = flight_leg.flight_number and
+                     flight_leg.arrival_airport_code = airport.airport_code)
+group by airline_name
+having Number_of_current_destinations > 16
+order by Number_of_current_destinations desc;
+
+
+select airline.Airline_name, flight.Flight_number, avg(miles) as Average_miles_of_flight
+from airline, flight, flight_leg
+where flight.flight_number in (select flight_leg.flight_number
+							   where flight.flight_number = flight_leg.flight_number) and airline.airline_id = flight.airline
+group by Airline_name, Flight_number
+order by Average_miles_of_flight desc;
+
+
+select Airline.Airline_name, Flight.Flight_number, sum(Amount) as Price_of_flight
+from Airline, Flight, Fare
+where Flight.Flight_number in (	select Fare.Flight_number
+								where Flight.Flight_number = Fare.Flight_number
+                                and airline.airline_id = flight.airline)
+group by Airline_name, Flight_number
+order by sum(Amount) asc;
+
+select country, count(*)
+from customer
+where pass_number in (select pass_number
+					  from flight, ticket
+                      where ticket.Flight_number = Flight.Flight_number and ticket.Customer_pass_num = Customer.Pass_number and Ticket.date > '2019-01-01')
+group by country;

@@ -1,0 +1,108 @@
+select 2 tables
+
+en çok uçulan şehirler
+--
+select Airport.Airport_name,Airport.City,count(*) as Flights from airport, leg_instance where Airport_code = leg_instance.Arrival_airport_code 
+group by Arrival_airport_code order by Flights desc;
+--
+
+en çok kullanılan uçak
+--
+select airplane.Airplane_id,airplane.Airplane_type,airplane.Total_no_of_seats, Count(*) as Flights from airplane, leg_instance 
+where leg_instance.Airplane_id = airplane.Airplane_id
+group by leg_instance.Airplane_id
+order by Flights desc;
+--
+
+
+
+en çok gerçekleştirilen uçuş
+--
+select Dep.City as Departure_City, Arr.City as Arrival_City, Count(*) Flights 
+from flight_leg, airport as Arr, airport as Dep
+where Arr.Airport_code = Arrival_airport_code AND
+	Dep.Airport_code = Departure_airport_code
+group by Departure_airport_code, Arrival_airport_code
+order by Flights desc;
+--
+
+select 3 tables
+
+bir uçak firmasının kaç tane uçağı aktif olarak kullanılıyor
+--
+select airplane_company.Airplane_company_name,Count(*) as Num_of_Planes 
+from airplane,airplane_type,airplane_company
+where airplane.Airplane_type = airplane_type.Airplane_type_name AND
+	airplane_type.Airplane_company = airplane_company.Airplane_company_id
+group by airplane_company.Airplane_company_name
+order by Num_of_Planes desc;
+--
+
+en fazla insan taşıyan destinasyon
+--
+select Dep.City as Departure_City, Arr.City as Arrival_City,Count(*) as Num_of_Passengers
+from ffc, flight_leg, airport, airport as Dep, airport as Arr
+where 	ffc.flight_number = flight_leg.Flight_number AND
+		ffc.Leg_number = flight_leg.Leg_number AND
+        flight_leg.Departure_airport_code = Dep.Airport_code AND
+        flight_leg.Arrival_airport_code = Arr.Airport_code
+group by Dep.City, Arr.City
+order by Num_of_Passengers desc;
+--
+
+havayolu şirketlerinin yolcu sayısı
+--
+select airline.Airline_name, Count(*) Num_of_Passengers
+from ffc, flight, airline
+where   ffc.Flight_number = flight.Flight_number AND
+        flight.Airline = airline.Airline_id
+group by airline.Airline_name
+order by Num_of_Passengers desc;
+--
+
+en fazla para ödeyen yolcular
+--
+select customer.name, customer.segmentation, customer.country, SUM(Fare.Amount) as total_paid_amount
+from customer,ffc,fare
+where   customer.Pass_number = ffc.Customer_pass_num AND
+		ffc.flight_number = fare.flight_number
+group by Customer_pass_num
+order by total_paid_amount desc;
+--
+
+select 4 tables
+
+uçak üreten firmaların yer aldığı uçuş sayısı
+--
+select 	airplane_company.Airplane_company_name,count(*) as Num_of_Flights 
+from 	leg_instance, airplane,airplane_type, airplane_company
+where 	leg_instance.Airplane_id = airplane.Airplane_id AND
+		airplane.Airplane_type = airplane_type.Airplane_type_name AND
+        airplane_type.Airplane_company = Airplane_company.Airplane_company_id
+group by Airplane_company.Airplane_company_name
+Order by Num_of_Flights desc;
+--
+
+arrival şehirlere gelen insanların yaş ortalaması
+--
+select	Arr.City,AVG(customer.Age)  as Average_Age
+from	airport as ARR, customer, flight_leg, ticket
+where 	ARR.Airport_code = flight_leg.Arrival_airport_code AND
+		flight_leg.Flight_number = ticket.Flight_number AND
+        flight_leg.Leg_number = ticket.Leg_number AND
+        ticket.Customer_pass_num = customer.Pass_number
+group by Arr.City
+order by Average_Age;
+--
+
+en ucuz destinasyonlar ve hangi havayolu ile gidildiği
+--
+select 	airline.Airline_name, Dep.City as Departure_City, Arr.City as Arrival_City, Fare.Amount as Price
+from 	fare, flight, airline, flight_leg, airport as Dep, airport as Arr
+where	fare.Flight_number = flight.Flight_number AND
+		flight.Flight_number = flight_leg.Flight_number AND
+        flight_leg.Departure_airport_code = Dep.Airport_code AND
+        flight_leg.Arrival_airport_code = Arr.Airport_code AND
+        flight.Airline = airline.Airline_id
+order by	fare.Amount;
+--
